@@ -1,11 +1,9 @@
-use std::collections::HashMap;
-
 use crate::chain_state::ChainState;
 
 type Address = String;
 
-// TODO: Make sure types are what we expect
-struct Transaction {
+// NOTE: signature omitted for now
+pub struct Transaction {
     from: Address,
     to: Address,
 
@@ -14,34 +12,108 @@ struct Transaction {
     fee: u64,
 
     nonce: u32,
-    signature: String,
 }
 
-// TODO: concurrency necessary? depends on implementation of webserver threads
-// TODO: might want other aggregate structures to improve performance
 pub struct TxPool {
     txes: Vec<Transaction>,
 }
 
-impl TxPool {
-    pub fn insert(&self, tx: Transaction, chain_state: ChainState) -> Result<Transaction, String> {
-        // TODO: Put in verification + add logic:
-        // 1. if nonce < all existing nonces, fail
-        // 2. elsif nonce > 1 + last nonce, fail
-        // 3. elsif nonce == nonce already in there, pass through balance check and replace if it passes
-        // 4. elsif balance issue, fail (w/ message about conflict!)
-        // 5. else, add tx
+// NOTE: I may generalize this in the future
+#[derive(Debug, PartialEq)]
+pub enum TxPoolInsertError {
+    NoncePassed,
+    NonceSkips,
+    InsufficientBalance,
+}
 
-        Ok(tx)
+impl TxPool {
+    pub fn insert(
+        &self,
+        tx: &Transaction,
+        chain_state: &ChainState,
+    ) -> Result<(), TxPoolInsertError> {
+        self.check_valid_nonce(tx)?;
+        self.check_sufficient_balance(tx, chain_state)?;
+
+        // TODO: do insertion
+
+        Ok(())
     }
 
-    // TODO:
-    fn relevant_txes(&self, address: Address) -> Vec<Transaction> {
+    fn check_valid_nonce(&self, tx: &Transaction) -> Result<(), TxPoolInsertError> {
+        Ok(())
+    }
+
+    fn check_sufficient_balance(
+        &self,
+        tx: &Transaction,
+        chain_state: &ChainState,
+    ) -> Result<(), TxPoolInsertError> {
+        Ok(())
+    }
+
+    // TODO: filter based on coin too!
+    fn relevant_txes(&self, address: &Address) -> Vec<&Transaction> {
         self.txes
+            .iter()
+            .filter(|tx| tx.from == *address || tx.to == *address)
+            .map(|tx| tx.clone())
+            .collect()
     }
 
     // TODO:
     // fn popBatch(size: u32) -> [Transaction] {
     //     []
     // }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_tx(nonce: u32) -> Transaction {
+        let from = String::from("from");
+        let to = String::from("to");
+        let coin = 1;
+
+        // NOTE: these don't matter in valid nonce tests, but will matter in balance tests
+        let amount = 100;
+        let fee = 10;
+
+        Transaction {
+            from,
+            to,
+            coin,
+            amount,
+            fee,
+            nonce,
+        }
+    }
+
+    #[test]
+    fn test_check_valid_nonce() {
+        let pool = TxPool {
+            txes: (3..11).map(test_tx).collect(),
+        };
+
+        // NOTE: replacement behavior
+        for nonce in 3..11 {
+            assert_eq!(pool.check_valid_nonce(&test_tx(nonce)), Ok(()));
+        }
+        assert_eq!(pool.check_valid_nonce(&test_tx(11)), Ok(()));
+
+        assert_eq!(
+            pool.check_valid_nonce(&test_tx(2)),
+            Err(TxPoolInsertError::NoncePassed)
+        );
+        assert_eq!(
+            pool.check_valid_nonce(&test_tx(12)),
+            Err(TxPoolInsertError::NonceSkips)
+        )
+    }
+
+    #[test]
+    fn test_check_sufficient_balance() {
+        // TODO
+    }
 }
