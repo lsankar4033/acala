@@ -91,7 +91,7 @@ mod tests {
     }
 
     #[test]
-    fn test_check_valid_nonce() {
+    fn check_valid_nonce() {
         let pool = TxPool {
             txes: (3..11).map(test_tx).collect(),
         };
@@ -113,7 +113,7 @@ mod tests {
     }
 
     #[test]
-    fn test_check_sufficient_balance() {
+    fn check_sufficient_balance() {
         // TODO
     }
 }
