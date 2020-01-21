@@ -3,6 +3,7 @@ import asyncio
 from fastapi import FastAPI
 
 from acala.chain_state import ChainState, sync_chain_state
+from acala.collector import Collector
 from acala.tx_pool import TxPool
 
 # NOTE: can change server based on what works for us
