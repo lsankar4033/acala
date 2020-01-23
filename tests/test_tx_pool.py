@@ -87,6 +87,21 @@ class TestRetrieveBatch:
         for tx in txes:
             await tp.add_tx(tx)
 
-        returned_txes = await tp.retrieve_batch({})
+        returned_txes = await tp.retrieve_batch()
         assert returned_txes == txes
+        check_tx_pool(tp, [])
+
+    async def test_omit_failing_txes(self):
+        def omit_evens_transition_fn(state, tx):
+            if tx.nonce % 2 is 1:
+                return state
+            else:
+                return None
+
+        tp = TxPool()
+        for i in range(6):
+            await tp.add_tx(build_tx(i))
+
+        txes = await tp.retrieve_batch({}, omit_evens_transition_fn)
+        assert txes == [build_tx(i) for i in range(6) if i % 2 is 1]
         check_tx_pool(tp, [])

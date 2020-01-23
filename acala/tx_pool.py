@@ -12,12 +12,9 @@ class TxPool():
         self.from_address_to_last_nonce = defaultdict(lambda: -1)
         self.txes = []
 
-    def __init__(self, tx_transition_fn=None, max_size=None):
+    def __init__(self, max_size=None):
         self.lock = asyncio.Lock()
-
-        self.tx_transition_fn = tx_transition_fn
         self.max_size = max_size
-
         self._reset()
 
     # NOTE: only replace or append allowed. no 'insertion'
@@ -48,10 +45,18 @@ class TxPool():
 
                 self.txes[matching_indices[0]] = tx
 
-    # NOTE: removes txes that are selected from the tx pool
-    # resets internal state as necessary
-    async def retrieve_batch(self, rollup_state):
+    # TODO: do we need to know final state after calling this?
+    # NOTE: removes all txes when finished. If transition_fn isn't specified, will just return all txes
+    async def retrieve_batch(self, init_state={}, transition_fn=lambda s, t: s):
         async with self.lock:
-            to_return = self.txes
+            to_return = []
+            cur_state = init_state
+
+            for tx in self.txes:
+                next_state = transition_fn(cur_state, tx)
+                if next_state is not None:
+                    to_return.append(tx)
+                    cur_state = next_state
+
             self._reset()
             return to_return
