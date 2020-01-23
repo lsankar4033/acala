@@ -68,3 +68,12 @@ class TestAddTx:
 
         with pytest.raises(ValueError):
             await tp.add_tx(build_tx(1))
+
+    async def test_max_size(self):
+        tp = TxPool(max_size=2)
+        await tp.add_tx(build_tx(1))
+        await tp.add_tx(build_tx(2))
+
+        # NOTE: should this be a ValueError?
+        with pytest.raises(ValueError):
+            await tp.add_tx(build_tx(3))

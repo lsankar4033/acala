@@ -5,21 +5,25 @@ from collections import defaultdict, namedtuple
 # TODO: add coin?
 Tx = namedtuple('Tx', ['from_address', 'to_address', 'value', 'data', 'nonce'])
 
-# TODO: add max pool size (ddos protection)
-
 
 class TxPool():
-    def __init__(self, tx_transition_fn=None):
+    def __init__(self, tx_transition_fn=None, max_size=1000):
         self.lock = asyncio.Lock()
 
         self.from_address_to_last_nonce = defaultdict(lambda: -1)
         self.txes = []
 
         self.tx_transition_fn = tx_transition_fn
+        self.max_size = max_size
 
     # NOTE: only replace or append allowed. no 'insertion'
     async def add_tx(self, tx: Tx):
         async with self.lock:
+
+            if self.max_size is not None and len(self.txes) >= self.max_size:
+                raise ValueError(
+                    f"Can't add more txes: max size {self.max_size} has been reached")
+
             last_nonce = self.from_address_to_last_nonce[tx.from_address]
             if last_nonce is -1 or tx.nonce == last_nonce + 1:
                 self.txes.append(tx)
