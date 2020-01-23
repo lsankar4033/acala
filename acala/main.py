@@ -23,6 +23,7 @@ async def test():
     return {'hello': 'world'}
 
 # TODO: route for submitting a tx
+# Make sure to check nonce with chain state!
 
 # Run sync tasks
 asyncio.gather(
