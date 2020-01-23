@@ -77,3 +77,16 @@ class TestAddTx:
         # NOTE: should this be a ValueError?
         with pytest.raises(ValueError):
             await tp.add_tx(build_tx(3))
+
+
+@pytest.mark.asyncio
+class TestRetrieveBatch:
+    async def test_no_transition_fn(self):
+        tp = TxPool()
+        txes = [build_tx(i) for i in range(3)]
+        for tx in txes:
+            await tp.add_tx(tx)
+
+        returned_txes = await tp.retrieve_batch({})
+        assert returned_txes == txes
+        check_tx_pool(tp, [])

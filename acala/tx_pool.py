@@ -7,14 +7,18 @@ Tx = namedtuple('Tx', ['from_address', 'to_address', 'value', 'data', 'nonce'])
 
 
 class TxPool():
-    def __init__(self, tx_transition_fn=None, max_size=1000):
-        self.lock = asyncio.Lock()
 
+    def _reset(self):
         self.from_address_to_last_nonce = defaultdict(lambda: -1)
         self.txes = []
 
+    def __init__(self, tx_transition_fn=None, max_size=None):
+        self.lock = asyncio.Lock()
+
         self.tx_transition_fn = tx_transition_fn
         self.max_size = max_size
+
+        self._reset()
 
     # NOTE: only replace or append allowed. no 'insertion'
     async def add_tx(self, tx: Tx):
@@ -48,4 +52,6 @@ class TxPool():
     # resets internal state as necessary
     async def retrieve_batch(self, rollup_state):
         async with self.lock:
-            pass
+            to_return = self.txes
+            self._reset()
+            return to_return
