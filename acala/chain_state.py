@@ -1,6 +1,8 @@
 import asyncio
 
 # TODO: provide specific versions of provided functions for use by iden3 (and maybe OR?)
+
+
 class ChainState():
     def __init__(self, rollup_slot_fn, rollup_state_fn):
         self.lock = asyncio.Lock()
@@ -22,6 +24,7 @@ class ChainState():
                 'slot_owner': slot_owner,
                 'rollup_state': rollup_state
             }
+
 
 async def sync_chain_state(chain_state, web3, period_secs=15):
     while True:

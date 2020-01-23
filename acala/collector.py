@@ -4,6 +4,7 @@ import asyncio
 import os
 operator_address = os.environ['OPERATOR_ADDRESS']
 
+
 class Collector():
     def __init__(self, chain_state, tx_pool):
         self.chain_state = chain_state
