@@ -6,14 +6,14 @@ from collections import defaultdict, namedtuple
 Tx = namedtuple('Tx', ['from_address', 'to_address', 'value', 'data', 'nonce'])
 
 # TODO: add max pool size (ddos protection)
+
+
 class TxPool():
-    def __init__(self, tx_transition_fn):
+    def __init__(self, tx_transition_fn=None):
         self.lock = asyncio.Lock()
 
         self.from_address_to_last_nonce = defaultdict(lambda: -1)
         self.txes = []
-
-        self.from_address_to_txes = defaultdict(list)
 
         self.tx_transition_fn = tx_transition_fn
 
@@ -23,18 +23,20 @@ class TxPool():
             last_nonce = self.from_address_to_last_nonce[tx.from_address]
             if last_nonce is -1 or tx.nonce == last_nonce + 1:
                 self.txes.append(tx)
-                self.from_address_to_last_nonce[tx.from_address_to_last_nonce] = tx.nonce
+                self.from_address_to_last_nonce[tx.from_address] = tx.nonce
 
             elif tx.nonce > last_nonce + 1:
-                raise ValueError(f"Nonce {tx.nonce} is too much larger than previous nonce {last_nonce}")
+                raise ValueError(
+                    f"Nonce {tx.nonce} is too much larger than previous nonce {last_nonce}")
 
             else:
-                matching_indices = [i for (i, existing_tx) in self.txes if
+                matching_indices = [i for (i, existing_tx) in enumerate(self.txes) if
                                     existing_tx.nonce is tx.nonce and
                                     existing_tx.from_address is tx.from_address]
 
                 if len(matching_indices) is 0:
-                    raise ValueError(f"Nonce {tx.nonce} is less than that of all nonces in tx pool")
+                    raise ValueError(
+                        f"Nonce {tx.nonce} is less than all nonces in tx pool for the same sender")
 
                 self.txes[matching_indices[0]] = tx
 
