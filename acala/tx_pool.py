@@ -5,11 +5,15 @@ from collections import defaultdict, namedtuple
 # TODO: add coin?
 Tx = namedtuple('Tx', ['from_address', 'to_address', 'value', 'data', 'nonce'])
 
+# TODO: add max pool size (ddos protection)
 class TxPool():
-    def __init__(self):
+    def __init__(self, tx_transiation_fn):
         self.lock = asyncio.Lock()
         self.from_address_to_txes = defaultdict(list)
 
+        self.tx_transition_fn = tx_transition_fn
+
+    # TODO: global ordering on txes?
     async def add_tx(self, tx: Tx):
         async with self.lock:
             existing_txes = self.from_address_to_txes[tx.from_address]
@@ -36,6 +40,7 @@ class TxPool():
                 else:
                     existing_txes.append(tx)
 
-    async def retrieve_valid_batch(self, chain_state):
+    # NOTE: removes txes that are selected from the tx pool
+    async def retrieve_batch(self, rollup_state):
         async with self.lock:
             pass
